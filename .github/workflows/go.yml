@@ -1,4 +1,5 @@
 name: Build
+
 on:
   push:
     branches:
@@ -6,6 +7,8 @@ on:
     tags:
       - '*'
   pull_request:
+    branches:
+      - 'master'
 
 env:
   APP_NAME: glider
@@ -15,6 +18,7 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,14 +32,13 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          check-latest: true
           go-version-file: 'go.mod'
           cache: true
 
       - name: Test
         run: go test -v .
 
-      - name: Build
+      - name: Build Snapshot
         uses: goreleaser/goreleaser-action@v5
         if: "!startsWith(github.ref, 'refs/tags/')"
         with:
@@ -44,37 +47,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Artifact - Linux amd64
-        uses: actions/upload-artifact@v3
+      - name: Upload Artifacts
         if: "!startsWith(github.ref, 'refs/tags/')"
-        with:
-          name: ${{ env.APP_NAME }}-dev-${{ env.SHA_SHORT }}-linux-amd64
-          path: |
-            ./dist/default_linux_amd64_v1/${{ env.APP_NAME }}
-
-      - name: Upload Artifact - Linux arm64
         uses: actions/upload-artifact@v3
-        if: "!startsWith(github.ref, 'refs/tags/')"
         with:
-          name: ${{ env.APP_NAME }}-dev-${{ env.SHA_SHORT }}-linux-arm64
+          name: glider-dev-${{ env.SHA_SHORT }}
           path: |
-            ./dist/default_linux_arm64/${{ env.APP_NAME }}
-
-      - name: Upload Artifact - Darwin arm64
-        uses: actions/upload-artifact@v3
-        if: "!startsWith(github.ref, 'refs/tags/')"
-        with:
-          name: ${{ env.APP_NAME }}-dev-${{ env.SHA_SHORT }}-darwin-arm64
-          path: |
-            ./dist/default_darwin_arm64/${{ env.APP_NAME }}
-
-      - name: Upload Artifact - Windows amd64
-        uses: actions/upload-artifact@v3
-        if: "!startsWith(github.ref, 'refs/tags/')"
-        with:
-          name: ${{ env.APP_NAME }}-dev-${{ env.SHA_SHORT }}-windows-amd64
-          path: |
-            ./dist/default_windows_amd64_v1/${{ env.APP_NAME }}.exe
+            dist/**/${{ env.APP_NAME }}*
+            !dist/**/*.zip
+            !dist/**/*.tar.gz
 
       - name: Release
         uses: goreleaser/goreleaser-action@v5
