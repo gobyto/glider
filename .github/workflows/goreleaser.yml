@@ -1,0 +1,16 @@
+# goreleaser.yml 示例（简化版）
+project_name: glider
+builds:
+  - id: default
+    main: ./main.go
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+archives:
+  - format: tar.gz
